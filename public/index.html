@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="chat-container">
+    <h2>💬 Chat Room</h2>
+    <ul id="messages"></ul>
+    <form id="chat-form">
+      <input id="msg" placeholder="Type your message..." autocomplete="off" />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <!-- Ting Sound -->
+  <audio id="ting" src="ting.mp3" preload="auto"></audio>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('msg');
+    const messages = document.getElementById('messages');
+    const ting = document.getElementById('ting');
+
+    // Prompt for username
+    const username = prompt("Enter your name:");
+    socket.emit('new-user', username);
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (input.value.trim()) {
+        socket.emit('chat message', input.value.trim());
+        input.value = '';
+      }
+    });
+
+    socket.on('chat message', (data) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${data.user}:</strong> ${data.msg}`;
+      messages.appendChild(li);
+      ting.play(); // play ting sound
+      messages.scrollTop = messages.scrollHeight;
+    });
+
+    socket.on('user-joined', (name) => {
+      const li = document.createElement('li');
+      li.textContent = `🔵 ${name} joined the chat`;
+      li.classList.add('system');
+      messages.appendChild(li);
+    });
+
+    socket.on('user-left', (name) => {
+      const li = document.createElement('li');
+      li.textContent = `🔴 ${name} left the chat`;
+      li.classList.add('system');
+      messages.appendChild(li);
+    });
+  </script>
+</body>
+</html>
